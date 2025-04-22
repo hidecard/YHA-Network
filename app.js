@@ -85,9 +85,9 @@ function showSection(section) {
   } else if (section === 'favorites') {
     loadFavorites();
   } else if (section === 'blog-detail') {
-    document.title = `Ez Dev - Blog Detail`;
+    document.title = `YHA-Network - Blog Detail`;
   } else {
-    document.title = `Ez Dev - ${section.charAt(0).toUpperCase() + section.slice(1)}`;
+    document.title = `YHA-Network - ${section.charAt(0).toUpperCase() + section.slice(1)}`;
   }
 
   if (categoryFilter) {
