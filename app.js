@@ -6,6 +6,9 @@ let blogPosts = [];
 let currentCategory = 'All';
 let currentSearch = '';
 let searchTimeout = null;
+let sourceCodesPage = 1;
+let blogPostsPage = 1;
+const ITEMS_PER_PAGE = 8;
 
 function getLocalStore(key, defaultValue = {}) {
   try {
@@ -66,6 +69,8 @@ function showSection(section) {
 
   currentCategory = 'All';
   currentSearch = '';
+  if (section === 'source_codes') sourceCodesPage = 1;
+  if (section === 'blog') blogPostsPage = 1;
 
   const categoryFilter = sectionElement.querySelector('.category-filter');
   const searchBar = sectionElement.querySelector('.search-bar');
@@ -78,14 +83,19 @@ function showSection(section) {
     clearSearch.style.display = 'none';
   }
 
-  if (section === 'source_codes') {
+  if (section === 'home') {
+    document.title = 'YHA-Network - Home';
+  } else if (section === 'source_codes') {
     loadSourceCodes();
+    document.title = 'YHA-Network - Source Codes';
   } else if (section === 'blog') {
     loadBlogPosts();
+    document.title = 'YHA-Network - Blog';
   } else if (section === 'favorites') {
     loadFavorites();
+    document.title = 'YHA-Network - Favorites';
   } else if (section === 'blog-detail') {
-    document.title = `YHA-Network - Blog Detail`;
+    document.title = 'YHA-Network - Blog Detail';
   } else {
     document.title = `YHA-Network - ${section.charAt(0).toUpperCase() + section.slice(1)}`;
   }
@@ -168,6 +178,77 @@ function loadSourceCodes() {
   }
 }
 
+function goToPage(page, section) {
+  if (section === 'source_codes') {
+    sourceCodesPage = Math.max(1, Math.min(page, Math.ceil(sourceCodes.length / ITEMS_PER_PAGE)));
+    displaySourceCodes();
+  } else if (section === 'blog') {
+    blogPostsPage = Math.max(1, Math.min(page, Math.ceil(blogPosts.length / ITEMS_PER_PAGE)));
+    displayBlogPosts();
+  }
+}
+
+function renderPagination(totalItems, currentPage, section, containerId) {
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  if (totalPages <= 1) return '';
+
+  let paginationHtml = `
+    <nav aria-label="pagination" class="d-flex justify-content-center mt-4">
+      <ul class="pagination">
+        <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}, '${section}'); return false;">Previous</a>
+        </li>
+  `;
+
+  const maxVisiblePages = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  if (startPage > 1) {
+    paginationHtml += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToPage(1, '${section}'); return false;">1</a>
+      </li>
+    `;
+    if (startPage > 2) {
+      paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    paginationHtml += `
+      <li class="page-item ${i === currentPage ? 'active' : ''}">
+        <a class="page-link" href="#" onclick="goToPage(${i}, '${section}'); return false;">${i}</a>
+      </li>
+    `;
+  }
+
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+    paginationHtml += `
+      <li class="page-item">
+        <a class="page-link" href="#" onclick="goToPage(${totalPages}, '${section}'); return false;">${totalPages}</a>
+      </li>
+    `;
+  }
+
+  paginationHtml += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}, '${section}'); return false;">Next</a>
+        </li>
+      </ul>
+    </nav>
+  `;
+
+  return paginationHtml;
+}
+
 function displaySourceCodes() {
   const codeList = document.getElementById('code-list');
   if (!codeList) {
@@ -192,7 +273,11 @@ function displaySourceCodes() {
     return;
   }
 
-  filteredCodes.forEach(code => {
+  const startIndex = (sourceCodesPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedCodes = filteredCodes.slice(startIndex, endIndex);
+
+  paginatedCodes.forEach(code => {
     const downloadZipUrl = code.github_repo ? `${code.github_repo}/archive/refs/heads/main.zip` : '#';
     const isFav = isFavorited(code.id, 'source_codes') ? 'active' : '';
     
@@ -218,6 +303,8 @@ function displaySourceCodes() {
       </div>
     `;
   });
+
+  codeList.innerHTML += renderPagination(filteredCodes.length, sourceCodesPage, 'source_codes', 'code-list');
 }
 
 function loadBlogPosts() {
@@ -263,7 +350,11 @@ function displayBlogPosts() {
     return;
   }
 
-  filteredPosts.forEach(post => {
+  const startIndex = (blogPostsPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedPosts = filteredPosts.slice(startIndex, endIndex);
+
+  paginatedPosts.forEach(post => {
     const isFav = isFavorited(post.id, 'blog_posts') ? 'active' : '';
     
     blogList.innerHTML += `
@@ -287,6 +378,8 @@ function displayBlogPosts() {
       </div>
     `;
   });
+
+  blogList.innerHTML += renderPagination(filteredPosts.length, blogPostsPage, 'blog', 'blog-list');
 }
 
 function showBlogDetail(postId) {
@@ -398,14 +491,26 @@ function loadFavorites() {
 
 function filterCategory(category, section) {
   currentCategory = category;
-  if (section === 'source_codes') displaySourceCodes();
-  if (section === 'blog') displayBlogPosts();
+  if (section === 'source_codes') {
+    sourceCodesPage = 1;
+    displaySourceCodes();
+  }
+  if (section === 'blog') {
+    blogPostsPage = 1;
+    displayBlogPosts();
+  }
 }
 
 function searchItems(query, section) {
   currentSearch = query;
-  if (section === 'source_codes') displaySourceCodes();
-  if (section === 'blog') displayBlogPosts();
+  if (section === 'source_codes') {
+    sourceCodesPage = 1;
+    displaySourceCodes();
+  }
+  if (section === 'blog') {
+    blogPostsPage = 1;
+    displayBlogPosts();
+  }
 }
 
 // Initialize navigation
@@ -420,5 +525,5 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
   });
-  showSection('source_codes');
+  showSection('home');
 });
