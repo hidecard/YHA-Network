@@ -1,0 +1,76 @@
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  .nav-link {
+    font-size: 1rem;
+  }
+  .card-img-top {
+    height: 200px;
+    object-fit: cover;
+  }
+  .card {
+    transition: transform 0.2s;
+  }
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  .btn-favorite {
+    background-color: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+  }
+  .btn-favorite.active {
+    background-color: #dc3545;
+    color: white;
+  }
+  .btn-download {
+    background-color: #333;
+    color: white;
+  }
+  .blog-detail img {
+    max-width: 100%;
+    height: auto;
+  }
+  .form-label {
+    font-weight: 500;
+  }
+  .clear-search {
+    cursor: pointer;
+    display: none;
+    margin-left: 0.5rem;
+  }
+  @media (max-width: 576px) {
+    .navbar-brand {
+      font-size: 1.25rem;
+    }
+    .nav-link {
+      font-size: 0.875rem;
+    }
+    .card-img-top {
+      height: 150px;
+    }
+    .card-title {
+      font-size: 1.1rem;
+    }
+    .card-text, p {
+      font-size: 0.9rem;
+    }
+    .btn {
+      font-size: 0.85rem;
+      padding: 0.4rem 0.8rem;
+    }
+    .form-select, .form-control {
+      font-size: 0.9rem;
+    }
+  }
+  @media (min-width: 768px) {
+    .filter-container {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .filter-container .form-group {
+      flex: 1;
+    }
+  }
